@@ -1,22 +1,29 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, Trash2, X } from 'lucide-react';
-import type { Trail } from '../data/trails';
+import { CAR_TYPE_LABELS, CATEGORY_LABELS } from '../data/mockPlaces';
+import type { CarTypeEnum, PlaceWithReports } from '../types/database';
 
 interface ItineraryPanelProps {
   isOpen: boolean;
-  savedTrails: Trail[];
+  savedPlaces: PlaceWithReports[];
   onClose: () => void;
-  onSelectTrail: (trail: Trail) => void;
-  onRemoveTrail: (id: string) => void;
+  onSelectPlace: (place: PlaceWithReports) => void;
+  onRemovePlace: (id: string) => void;
   onClearAll: () => void;
 }
 
+const CAR_RANK: Record<CarTypeEnum, number> = {
+  sedan: 1,
+  crossover: 2,
+  suv_4x4: 3,
+};
+
 export function ItineraryPanel({
   isOpen,
-  savedTrails,
+  savedPlaces,
   onClose,
-  onSelectTrail,
-  onRemoveTrail,
+  onSelectPlace,
+  onRemovePlace,
   onClearAll,
 }: ItineraryPanelProps) {
   const [copied, setCopied] = useState(false);
@@ -34,18 +41,21 @@ export function ItineraryPanel({
 
   if (!isOpen) return null;
 
-  const totalDistance = savedTrails.reduce((sum, item) => sum + item.distanceKm, 0);
-  const totalElevation = savedTrails.reduce((sum, item) => sum + item.elevationGainM, 0);
+  const totalMinutes = savedPlaces.reduce((sum, item) => sum + item.visit_duration_min, 0);
+  const totalHours = (totalMinutes / 60).toFixed(1);
+  const requiredCar: CarTypeEnum = savedPlaces.reduce<CarTypeEnum>((acc, item) => {
+    return CAR_RANK[item.min_car_type] > CAR_RANK[acc] ? item.min_car_type : acc;
+  }, 'sedan');
 
   const handleCopySummary = async () => {
-    if (savedTrails.length === 0) return;
+    if (savedPlaces.length === 0) return;
     const lines = [
-      'Мой план поездки по Приморью (PrimTrop):',
-      ...savedTrails.map(
-        (t, idx) =>
-          `${idx + 1}. ${t.name} (${t.district}) — ${t.distanceKm} км, +${t.elevationGainM} м [${t.coordinates}]`
+      'Мой план поездки по Приморью (ПримТроп):',
+      ...savedPlaces.map(
+        (p, idx) =>
+          `${idx + 1}. ${p.title} (${p.district}) — ${CAR_TYPE_LABELS[p.min_car_type]} [${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}]`
       ),
-      `Итого: ${totalDistance.toFixed(1)} км, суммарный набор +${totalElevation} м`,
+      `Рекомендуемый авто: ${CAR_TYPE_LABELS[requiredCar]} | Время на точках: ~${totalHours} ч`,
     ];
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
@@ -74,7 +84,7 @@ export function ItineraryPanel({
               Мой маршрут по Приморью
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Сохранённые тропы, сопки и маяки для поездки
+              Сохранённые точки, расчёт времени и требования к авто
             </p>
           </div>
           <button
@@ -91,62 +101,64 @@ export function ItineraryPanel({
           <div>
             <div className="text-xs text-slate-500">Точек</div>
             <div className="text-base font-semibold text-[#11161A] tabular-nums mt-0.5">
-              {savedTrails.length}
+              {savedPlaces.length}
             </div>
           </div>
           <div>
-            <div className="text-xs text-slate-500">Дистанция</div>
+            <div className="text-xs text-slate-500">На месте</div>
             <div className="text-base font-semibold text-[#11161A] tabular-nums mt-0.5">
-              {totalDistance.toFixed(1)} км
+              {totalHours} ч
             </div>
           </div>
           <div>
-            <div className="text-xs text-slate-500">Набор</div>
-            <div className="text-base font-semibold text-[#11161A] tabular-nums mt-0.5">
-              +{totalElevation} м
+            <div className="text-xs text-slate-500">Авто от</div>
+            <div className="text-sm font-semibold text-[#11161A] mt-0.5 truncate">
+              {savedPlaces.length > 0 ? CAR_TYPE_LABELS[requiredCar] : '—'}
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {savedTrails.length === 0 ? (
+          {savedPlaces.length === 0 ? (
             <div className="py-12 text-center space-y-2">
               <p className="text-sm font-medium text-[#11161A]">Список маршрута пока пуст</p>
               <p className="text-sm text-slate-500 max-w-xs mx-auto">
-                Выберите сопку, маяк или мыс в каталоге, чтобы собрать персональный план выезда.
+                Отметьте бухты, водопады и видовые площадки, чтобы собрать план поездки.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {savedTrails.map((trail, index) => (
+              {savedPlaces.map((place, index) => (
                 <div
-                  key={trail.id}
+                  key={place.id}
                   className="pb-4 border-b border-slate-200 last:border-b-0 flex items-start justify-between gap-3"
                 >
                   <div className="min-w-0">
                     <div className="text-xs text-slate-500 tabular-nums">
-                      0{index + 1} <span aria-hidden="true">·</span> {trail.category}{' '}
-                      <span aria-hidden="true">·</span> {trail.district}
+                      {String(index + 1).padStart(2, '0')} <span aria-hidden="true">·</span>{' '}
+                      {CATEGORY_LABELS[place.category]} <span aria-hidden="true">·</span>{' '}
+                      {place.district}
                     </div>
                     <button
                       type="button"
                       onClick={() => {
                         onClose();
-                        onSelectTrail(trail);
+                        onSelectPlace(place);
                       }}
                       className="text-sm font-semibold text-[#11161A] hover:text-[#0D5C63] transition-colors text-left mt-1 cursor-pointer"
                     >
-                      {trail.name}
+                      {place.title}
                     </button>
                     <div className="text-xs text-slate-600 tabular-nums mt-1">
-                      {trail.distanceKm.toFixed(1)} км <span aria-hidden="true">·</span> +
-                      {trail.elevationGainM} м <span aria-hidden="true">·</span> {trail.durationHours}
+                      {CAR_TYPE_LABELS[place.min_car_type]} <span aria-hidden="true">·</span>{' '}
+                      {place.visit_duration_min} мин <span aria-hidden="true">·</span>{' '}
+                      {place.seasonality}
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => onRemoveTrail(trail.id)}
-                    aria-label={`Удалить ${trail.name} из маршрута`}
+                    onClick={() => onRemovePlace(place.id)}
+                    aria-label={`Удалить ${place.title} из маршрута`}
                     className="p-2 text-slate-400 hover:text-rose-600 transition-colors shrink-0 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -158,7 +170,7 @@ export function ItineraryPanel({
         </div>
 
         <div className="p-6 border-t border-slate-200 bg-white flex items-center justify-between gap-3">
-          {savedTrails.length > 0 ? (
+          {savedPlaces.length > 0 ? (
             <>
               <button
                 type="button"
@@ -182,7 +194,7 @@ export function ItineraryPanel({
               onClick={onClose}
               className="w-full px-4 py-2 text-sm font-medium text-white bg-[#0D5C63] rounded-lg hover:bg-[#094348] transition-colors cursor-pointer"
             >
-              Перейти к маршрутам
+              Перейти к локациям
             </button>
           )}
         </div>

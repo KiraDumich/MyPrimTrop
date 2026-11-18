@@ -10,7 +10,9 @@
     "preview": "vite preview --port 3000 --host 0.0.0.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
     "lucide-react": "^0.511.0",
+    "maplibre-gl": "^6.19.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -21,6 +23,7 @@
     "@vitejs/plugin-react": "^4.4.1",
     "tailwindcss": "^4.1.7",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vite-plugin-pwa": "^2.0.0"
   }
 }
