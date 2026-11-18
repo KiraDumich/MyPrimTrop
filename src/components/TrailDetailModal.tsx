@@ -126,6 +126,7 @@ export function TrailDetailModal({
             src={resolvePlaceImage(place)}
             alt={place.title}
             title={place.title}
+            category={place.category}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />

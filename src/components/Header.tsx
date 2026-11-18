@@ -17,20 +17,23 @@ export function Header({
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 bg-[#F8F9FA]/95 backdrop-blur-sm border-b border-slate-200/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4 sm:gap-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 sm:gap-8">
         <button
           type="button"
           onClick={() => onSelectTab('map')}
-          className="font-[var(--font-display)] text-2xl font-bold tracking-tight text-[#11161A] whitespace-nowrap shrink-0 cursor-pointer"
+          className="font-[var(--font-display)] text-xl sm:text-2xl font-bold tracking-tight text-[#11161A] whitespace-nowrap shrink-0 cursor-pointer active:scale-[0.98] transition-transform"
         >
-          PrimTrop
+          ПримТроп
         </button>
 
-        <nav className="flex items-center gap-3.5 sm:gap-7 text-xs sm:text-sm font-medium text-slate-600 overflow-x-auto no-scrollbar">
+        <nav
+          aria-label="Основная навигация"
+          className="flex items-center gap-2.5 sm:gap-7 text-xs sm:text-sm font-medium text-slate-600 overflow-x-auto no-scrollbar min-w-0"
+        >
           <button
             type="button"
             onClick={() => onSelectTab('map')}
-            className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer py-1 border-b-2 ${
+            className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer py-1.5 border-b-2 active:opacity-80 ${
               activeTab === 'map'
                 ? 'text-[#0D5C63] border-[#0D5C63] font-semibold'
                 : 'border-transparent hover:text-[#11161A]'
@@ -41,7 +44,7 @@ export function Header({
           <button
             type="button"
             onClick={() => onSelectTab('route')}
-            className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer py-1 border-b-2 ${
+            className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer py-1.5 border-b-2 active:opacity-80 ${
               activeTab === 'route'
                 ? 'text-[#0D5C63] border-[#0D5C63] font-semibold'
                 : 'border-transparent hover:text-[#11161A]'
@@ -52,7 +55,7 @@ export function Header({
           <button
             type="button"
             onClick={() => onSelectTab('offline')}
-            className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer py-1 border-b-2 ${
+            className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer py-1.5 border-b-2 active:opacity-80 ${
               activeTab === 'offline'
                 ? 'text-[#0D5C63] border-[#0D5C63] font-semibold'
                 : 'border-transparent hover:text-[#11161A]'
@@ -63,13 +66,13 @@ export function Header({
           <button
             type="button"
             onClick={() => onSelectTab('catalog', '#places')}
-            className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer py-1 border-b-2 ${
+            className={`transition-colors whitespace-nowrap shrink-0 cursor-pointer py-1.5 border-b-2 active:opacity-80 ${
               activeTab === 'catalog'
                 ? 'text-[#0D5C63] border-[#0D5C63] font-semibold'
                 : 'border-transparent hover:text-[#11161A]'
             }`}
           >
-            Каталог
+            Места
           </button>
         </nav>
 
@@ -77,11 +80,11 @@ export function Header({
           <button
             type="button"
             onClick={onOpenItinerary}
-            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-[#0D5C63] rounded-lg hover:bg-[#094348] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D5C63] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white bg-[#0D5C63] rounded-lg hover:bg-[#094348] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D5C63] transition-all whitespace-nowrap shrink-0 cursor-pointer"
           >
-            <Compass className="w-4 h-4" />
+            <Compass className="w-4 h-4 shrink-0" />
             <span className="hidden sm:inline">Мой маршрут{savedCount > 0 ? ` (${savedCount})` : ''}</span>
-            <span className="sm:hidden">План{savedCount > 0 ? ` (${savedCount})` : ''}</span>
+            <span className="sm:hidden tabular-nums">План{savedCount > 0 ? ` (${savedCount})` : ''}</span>
           </button>
         </div>
       </div>

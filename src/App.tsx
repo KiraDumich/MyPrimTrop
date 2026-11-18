@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUpRight, Bookmark, Compass, Search, WifiOff } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Bookmark,
+  CheckCircle2,
+  Compass,
+  Search,
+  WifiOff,
+  X,
+} from 'lucide-react';
 import { Header, type AppTab } from './components/Header';
 import { MapScreen } from './components/MapScreen';
 import { RoutePlannerScreen } from './components/RoutePlannerScreen';
@@ -62,6 +70,7 @@ export function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [carFilter, setCarFilter] = useState<CarFilter>('all');
+  const [verifiedRoadsOnly, setVerifiedRoadsOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSeason, setActiveSeason] = useState<SeasonKey>('Осень');
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
@@ -102,7 +111,7 @@ export function App() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(savedIds));
     } catch {
-      // Ignore storage quota errors
+      // Игнорируем ошибку переполнения хранилища
     }
   }, [savedIds]);
 
@@ -180,6 +189,12 @@ export function App() {
       if (carFilter !== 'all' && CAR_RANK[place.min_car_type] > CAR_RANK[carFilter]) {
         return false;
       }
+      if (verifiedRoadsOnly) {
+        const latest = latestReportStatus(place);
+        if (!latest || latest === 'blocked') {
+          return false;
+        }
+      }
       if (!query) return true;
       return (
         place.title.toLowerCase().includes(query) ||
@@ -187,7 +202,7 @@ export function App() {
         place.description.toLowerCase().includes(query)
       );
     });
-  }, [places, categoryFilter, carFilter, searchQuery]);
+  }, [places, categoryFilter, carFilter, verifiedRoadsOnly, searchQuery]);
 
   const selectedPlace = useMemo(
     () => places.find((p) => p.id === selectedPlaceId) ?? null,
@@ -215,11 +230,11 @@ export function App() {
   );
 
   return (
-    <div id="top" className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#11161A]">
+    <div id="top" className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#11161A] overflow-x-hidden">
       {!isOnline && (
         <div
           role="status"
-          className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs font-medium text-amber-900 flex items-center justify-center gap-2"
+          className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs font-medium text-amber-900 flex items-center justify-center gap-2 text-center"
         >
           <WifiOff className="w-3.5 h-3.5 text-amber-700 shrink-0" />
           <span>Офлайн-режим: показаны сохранённые данные</span>
@@ -265,28 +280,28 @@ export function App() {
         <>
           <main className="flex-1">
             {/* Split-Screen Editorial Hero */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-12 lg:pt-14 lg:pb-16">
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 lg:pt-14 lg:pb-16">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
                 <div className="lg:col-span-6 flex flex-col justify-between py-2">
                   <div>
-                    <p className="text-xs font-medium text-slate-500 mb-4">
+                    <p className="text-xs font-medium text-slate-500 mb-3 sm:mb-4">
                       Приморский край <span aria-hidden="true">·</span> Сихотэ-Алинь и Японское море
                     </p>
-                    <h1 className="font-[var(--font-display)] text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-[#11161A] leading-[1.06] text-balance">
+                    <h1 className="font-[var(--font-display)] text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-[#11161A] leading-[1.08] text-balance">
                       Вся дикая красота Приморья: от сопок до маяков
                     </h1>
-                    <p className="mt-5 text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl">
+                    <p className="mt-4 sm:mt-5 text-sm sm:text-lg text-slate-600 leading-relaxed max-w-xl">
                       Атлас популярных локаций Приморского края с фильтрацией по типу автомобиля,
                       точными координатами и живыми дорожными отметками путешественников за
                       последние 72 часа.
                     </p>
                   </div>
 
-                  <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <div className="mt-7 sm:mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
                     <button
                       type="button"
                       onClick={() => setActiveTab('map')}
-                      className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-[#0D5C63] rounded-lg hover:bg-[#094348] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                      className="inline-flex items-center gap-2 px-5 sm:px-6 py-3 text-sm font-medium text-white bg-[#0D5C63] rounded-lg hover:bg-[#094348] active:scale-[0.98] transition-all whitespace-nowrap shrink-0 cursor-pointer"
                     >
                       <span>Открыть карту дорог</span>
                       <ArrowUpRight className="w-4 h-4" />
@@ -294,7 +309,7 @@ export function App() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('route')}
-                      className="inline-flex items-center gap-2 px-5 py-3 text-sm font-medium text-[#11161A] bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                      className="inline-flex items-center gap-2 px-4 sm:px-5 py-3 text-sm font-medium text-[#11161A] bg-white border border-slate-200 rounded-lg hover:border-slate-300 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap shrink-0"
                     >
                       <Compass className="w-4 h-4 text-[#0D5C63]" />
                       <span>Собрать маршрут на день</span>
@@ -303,20 +318,21 @@ export function App() {
                 </div>
 
                 <div className="lg:col-span-6">
-                  <div className="relative h-72 sm:h-96 lg:h-full min-h-[360px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-900">
+                  <div className="relative h-64 sm:h-96 lg:h-full min-h-[260px] sm:min-h-[360px] rounded-2xl overflow-hidden border border-slate-200 bg-slate-900">
                     <TrailImage
                       src={HERO_IMAGE}
                       alt="Скалистое побережье Приморья и сосны на утёсах Японского моря на закате"
                       title="Приморский край"
+                      category="viewpoint"
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
-                    <div className="absolute bottom-5 left-5 right-5 text-white flex items-end justify-between gap-4">
+                    <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+                    <div className="absolute bottom-4 sm:bottom-5 left-4 sm:left-5 right-4 sm:right-5 z-20 text-white flex items-end justify-between gap-4">
                       <div>
                         <div className="text-xs text-white/80">
                           о. Русский · Залив Петра Великого
                         </div>
-                        <div className="text-base font-medium mt-0.5">
+                        <div className="text-sm sm:text-base font-medium mt-0.5">
                           Базальтовые клифы у мыса Тобизина
                         </div>
                       </div>
@@ -329,9 +345,9 @@ export function App() {
               </div>
 
               {/* Full-width 4-column metrics strip below hero */}
-              <div className="mt-10 pt-8 border-t border-slate-200 grid grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="mt-8 sm:mt-10 pt-7 sm:pt-8 border-t border-slate-200 grid grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
                 <div>
-                  <div className="font-[var(--font-display)] text-3xl sm:text-4xl font-semibold text-[#11161A] tabular-nums">
+                  <div className="font-[var(--font-display)] text-2xl sm:text-4xl font-semibold text-[#11161A] tabular-nums">
                     {places.length} локаций
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
@@ -339,7 +355,7 @@ export function App() {
                   </p>
                 </div>
                 <div>
-                  <div className="font-[var(--font-display)] text-3xl sm:text-4xl font-semibold text-[#11161A] tabular-nums">
+                  <div className="font-[var(--font-display)] text-2xl sm:text-4xl font-semibold text-[#11161A] tabular-nums">
                     {totalReportsCount} сводок
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
@@ -347,7 +363,7 @@ export function App() {
                   </p>
                 </div>
                 <div>
-                  <div className="font-[var(--font-display)] text-3xl sm:text-4xl font-semibold text-[#11161A]">
+                  <div className="font-[var(--font-display)] text-2xl sm:text-4xl font-semibold text-[#11161A]">
                     3 класса авто
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
@@ -355,7 +371,7 @@ export function App() {
                   </p>
                 </div>
                 <div>
-                  <div className="font-[var(--font-display)] text-3xl sm:text-4xl font-semibold text-[#11161A]">
+                  <div className="font-[var(--font-display)] text-2xl sm:text-4xl font-semibold text-[#11161A]">
                     4 сезона
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
@@ -368,73 +384,105 @@ export function App() {
             {/* Places Catalog Section */}
             <section
               id="places"
-              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-slate-200"
+              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 border-t border-slate-200"
             >
-              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
-                <div>
-                  <h2 className="font-[var(--font-display)] text-3xl sm:text-4xl font-semibold text-[#11161A]">
-                    Каталог локаций Приморья
-                  </h2>
-                  <p className="text-sm text-slate-600 mt-1.5">
-                    Выберите тип автомобиля и откройте любую точку, чтобы посмотреть дорожную
-                    обстановку или оставить свою отметку.
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  <div
-                    className="inline-flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg overflow-x-auto"
-                    role="tablist"
-                    aria-label="Категории локаций"
-                  >
-                    {(
-                      [
-                        { id: 'all', label: 'Все' },
-                        { id: 'beach', label: 'Бухты' },
-                        { id: 'viewpoint', label: 'Видовые' },
-                        { id: 'waterfall', label: 'Водопады' },
-                        { id: 'history', label: 'История' },
-                      ] as { id: CategoryFilter; label: string }[]
-                    ).map((cat) => (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={categoryFilter === cat.id}
-                        onClick={() => setCategoryFilter(cat.id)}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                          categoryFilter === cat.id
-                            ? 'bg-white text-[#11161A] shadow-sm'
-                            : 'text-slate-600 hover:text-[#11161A]'
-                        }`}
-                      >
-                        {cat.label}
-                      </button>
-                    ))}
+              <div className="flex flex-col gap-5 mb-8">
+                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+                  <div>
+                    <h2 className="font-[var(--font-display)] text-3xl sm:text-4xl font-semibold text-[#11161A]">
+                      Места Приморья
+                    </h2>
+                    <p className="text-sm text-slate-600 mt-1.5">
+                      Ищите по названию или району, отбирайте проверенные дороги и открывайте
+                      карточки для просмотра свежих сводок.
+                    </p>
                   </div>
 
-                  <select
-                    aria-label="Фильтр по проходимости автомобиля"
-                    value={carFilter}
-                    onChange={(e) => setCarFilter(e.target.value as CarFilter)}
-                    className="px-3 py-2 text-xs font-medium bg-white border border-slate-200 rounded-lg text-slate-700 focus-visible:outline-2 focus-visible:outline-[#0D5C63] cursor-pointer"
-                  >
-                    <option value="all">Любой автомобиль</option>
-                    <option value="sedan">Доступно для седана</option>
-                    <option value="crossover">Доступно для кроссовера</option>
-                    <option value="suv_4x4">Внедорожник 4x4</option>
-                  </select>
-
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  {/* Search Input */}
+                  <div className="relative w-full lg:w-72">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
-                      type="search"
+                      type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Поиск по названию или району"
-                      aria-label="Поиск локаций"
-                      className="w-full sm:w-56 pl-8 pr-3 py-2 text-xs bg-white border border-slate-200 rounded-lg text-[#11161A] placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
+                      placeholder="Поиск по названию места..."
+                      aria-label="Поиск по названию места"
+                      className="w-full pl-10 pr-9 py-2.5 text-sm bg-white border border-slate-300 rounded-xl text-[#11161A] placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
                     />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        aria-label="Очистить поиск"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Filters Row */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+                    <div
+                      className="inline-flex items-center gap-1 p-1 bg-slate-200/70 rounded-xl shrink-0"
+                      role="tablist"
+                      aria-label="Категории локаций"
+                    >
+                      {(
+                        [
+                          { id: 'all', label: 'Все' },
+                          { id: 'beach', label: 'Бухты' },
+                          { id: 'viewpoint', label: 'Видовые' },
+                          { id: 'waterfall', label: 'Водопады' },
+                          { id: 'history', label: 'История' },
+                        ] as { id: CategoryFilter; label: string }[]
+                      ).map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={categoryFilter === cat.id}
+                          onClick={() => setCategoryFilter(cat.id)}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 active:scale-[0.98] ${
+                            categoryFilter === cat.id
+                              ? 'bg-white text-[#11161A] shadow-sm'
+                              : 'text-slate-600 hover:text-[#11161A]'
+                          }`}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      aria-pressed={verifiedRoadsOnly}
+                      onClick={() => setVerifiedRoadsOnly((prev) => !prev)}
+                      className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer whitespace-nowrap active:scale-[0.98] ${
+                        verifiedRoadsOnly
+                          ? 'bg-[#0D5C63] border-[#0D5C63] text-white'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span>Только проверенные дороги</span>
+                    </button>
+
+                    <select
+                      aria-label="Фильтр по проходимости автомобиля"
+                      value={carFilter}
+                      onChange={(e) => setCarFilter(e.target.value as CarFilter)}
+                      className="px-3 py-2 text-xs font-medium bg-white border border-slate-200 rounded-xl text-slate-700 hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-[#0D5C63] cursor-pointer"
+                    >
+                      <option value="all">Любой автомобиль</option>
+                      <option value="sedan">Доступно для седана</option>
+                      <option value="crossover">Доступно для кроссовера</option>
+                      <option value="suv_4x4">Внедорожник 4x4</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -456,21 +504,22 @@ export function App() {
                   ))}
                 </div>
               ) : filteredPlaces.length === 0 ? (
-                <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center">
+                <div className="bg-white border border-slate-200 rounded-2xl p-10 sm:p-12 text-center">
                   <p className="text-base font-medium text-[#11161A]">
-                    По заданным фильтрам локации не найдены
+                    По заданным фильтрам места не найдены
                   </p>
                   <p className="text-sm text-slate-500 mt-1">
-                    Попробуйте выбрать более проходимый класс авто или сбросить поиск.
+                    Попробуйте отключить фильтр «Только проверенные дороги» или изменить поиск.
                   </p>
                   <button
                     type="button"
                     onClick={() => {
                       setCategoryFilter('all');
                       setCarFilter('all');
+                      setVerifiedRoadsOnly(false);
                       setSearchQuery('');
                     }}
-                    className="mt-4 px-4 py-2 text-xs font-medium text-white bg-[#0D5C63] rounded-lg hover:bg-[#094348] transition-colors cursor-pointer"
+                    className="mt-4 px-4 py-2 text-xs font-medium text-white bg-[#0D5C63] rounded-lg hover:bg-[#094348] active:scale-[0.98] transition-all cursor-pointer"
                   >
                     Сбросить фильтры
                   </button>
@@ -495,10 +544,11 @@ export function App() {
                             src={resolvePlaceImage(place)}
                             alt={place.title}
                             title={place.title}
+                            category={place.category}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                          <span className="absolute bottom-3 left-4 font-[var(--font-mono)] text-xs text-white/90 tabular-nums">
+                          <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                          <span className="absolute bottom-3 left-4 z-20 font-[var(--font-mono)] text-xs text-white/90 tabular-nums">
                             {place.lat.toFixed(4)}° N, {place.lng.toFixed(4)}° E
                           </span>
                         </button>
@@ -556,7 +606,7 @@ export function App() {
                                   ? `Удалить ${place.title} из маршрута`
                                   : `Добавить ${place.title} в маршрут`
                               }
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.97] cursor-pointer whitespace-nowrap shrink-0 ${
                                 isSaved
                                   ? 'bg-[#0D5C63] text-white hover:bg-[#094348]'
                                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -577,7 +627,7 @@ export function App() {
             {/* Seasonality & Gear Preparation Section */}
             <section
               id="seasons"
-              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 border-t border-slate-200"
+              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14 border-t border-slate-200"
             >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                 <div className="lg:col-span-5">
@@ -589,13 +639,13 @@ export function App() {
                     сезон, чтобы проверить типичные условия и базовый набор экипировки.
                   </p>
 
-                  <div className="mt-6 inline-flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg">
+                  <div className="mt-6 inline-flex items-center gap-1 p-1 bg-slate-200/70 rounded-lg max-w-full overflow-x-auto no-scrollbar">
                     {SEASON_GUIDES.map((item) => (
                       <button
                         key={item.season}
                         type="button"
                         onClick={() => setActiveSeason(item.season)}
-                        className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                        className={`px-3.5 py-2 text-xs font-medium rounded-md transition-all cursor-pointer whitespace-nowrap shrink-0 active:scale-[0.98] ${
                           activeSeason === item.season
                             ? 'bg-white text-[#11161A] shadow-sm'
                             : 'text-slate-600 hover:text-[#11161A]'
@@ -654,8 +704,8 @@ export function App() {
 
           <footer className="border-t border-slate-200 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-              <div>
-                PrimTrop <span aria-hidden="true">·</span> Вся дикая красота Приморья в одном
+              <div className="text-center sm:text-left">
+                ПримТроп <span aria-hidden="true">·</span> Вся дикая красота Приморья в одном
                 приложении: от сопок до маяков
               </div>
               <button

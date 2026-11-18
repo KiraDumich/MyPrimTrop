@@ -150,7 +150,7 @@ export function MapScreen({
               type: 'raster',
               tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
               tileSize: 256,
-              attribution: '© OpenStreetMap contributors',
+              attribution: '© Участники OpenStreetMap',
             },
           },
           layers: [
@@ -488,7 +488,7 @@ export function MapScreen({
             Не удалось инициализировать WebGL-карту в этом браузере
           </p>
           <p className="text-sm text-slate-600 mt-1 max-w-md">
-            Переключитесь на вкладку «Каталог» в верхнем меню для просмотра всех локаций и
+            Переключитесь на вкладку «Места» в верхнем меню для просмотра всех локаций и
             дорожных сводок.
           </p>
         </div>
