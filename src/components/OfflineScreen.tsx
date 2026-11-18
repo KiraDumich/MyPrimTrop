@@ -19,6 +19,7 @@ import {
 } from '../lib/offlineStorage';
 import type { PlaceWithReports } from '../types/database';
 import { PWAInstallButton } from './PWAInstallButton';
+import { PrimTropLogo } from './PrimTropIcons';
 
 interface OfflineScreenProps {
   places: PlaceWithReports[];
@@ -82,20 +83,24 @@ export function OfflineScreen({ places, isOnline }: OfflineScreenProps) {
   const totalSavedSpots = downloadedList.reduce((sum, item) => sum + item.places.length, 0);
 
   return (
-    <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 space-y-8">
+    <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] md:py-10 space-y-6 sm:space-y-8">
       {/* Header & PWA Install Row */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-        <div>
-          <p className="text-xs font-medium text-slate-500 mb-2">
-            Автономная работа в тайге и на побережье
-          </p>
-          <h1 className="font-[var(--font-display)] text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#11161A] leading-tight">
-            Офлайн-пакеты районов
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 mt-2 max-w-2xl">
-            Скачайте карточки локаций, координаты и свежие статусы дорог заранее, чтобы пользоваться
-            маршрутами в Хасанском, Шкотовском или Ольгинском районах без сотовой связи.
-          </p>
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5 sm:gap-6">
+        <div className="flex items-start gap-3.5">
+          <PrimTropLogo size="lg" className="hidden sm:inline-flex mt-1" />
+          <div>
+            <p className="text-xs font-medium text-slate-500 mb-1.5 sm:mb-2">
+              Автономная работа в тайге и на побережье
+            </p>
+            <h1 className="font-[var(--font-display)] text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#11161A] leading-tight">
+              Офлайн-пакеты районов
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 mt-2 max-w-2xl">
+              Скачайте карточки локаций, координаты и свежие статусы дорог заранее, чтобы
+              пользоваться маршрутами в Хасанском, Шкотовском или Ольгинском районах без сотовой
+              связи.
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0">
@@ -104,8 +109,8 @@ export function OfflineScreen({ places, isOnline }: OfflineScreenProps) {
       </div>
 
       {/* Summary Strip */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div>
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div className="col-span-2 sm:col-span-1">
           <div className="text-xs text-slate-500 flex items-center gap-1.5">
             {isOnline ? (
               <Wifi className="w-3.5 h-3.5 text-emerald-600" />
@@ -114,7 +119,7 @@ export function OfflineScreen({ places, isOnline }: OfflineScreenProps) {
             )}
             <span>Состояние подключения</span>
           </div>
-          <div className="text-lg font-semibold text-[#11161A] mt-1">
+          <div className="text-base sm:text-lg font-semibold text-[#11161A] mt-1">
             {isOnline ? 'В сети — доступна синхронизация' : 'Офлайн — работа из кэша'}
           </div>
         </div>
@@ -124,7 +129,7 @@ export function OfflineScreen({ places, isOnline }: OfflineScreenProps) {
             <CheckCircle2 className="w-3.5 h-3.5 text-[#0D5C63]" />
             <span>Скачано районов</span>
           </div>
-          <div className="text-lg font-semibold text-[#11161A] tabular-nums mt-1">
+          <div className="text-base sm:text-lg font-semibold text-[#11161A] tabular-nums mt-1">
             {downloadedList.length} из {OFFLINE_DISTRICTS.length} ({totalSavedSpots} точек)
           </div>
         </div>
@@ -134,7 +139,7 @@ export function OfflineScreen({ places, isOnline }: OfflineScreenProps) {
             <HardDrive className="w-3.5 h-3.5 text-[#0D5C63]" />
             <span>Объём на устройстве</span>
           </div>
-          <div className="text-lg font-semibold text-[#11161A] tabular-nums mt-1">
+          <div className="text-base sm:text-lg font-semibold text-[#11161A] tabular-nums mt-1">
             {totalSavedMb.toFixed(1)} МБ
           </div>
         </div>

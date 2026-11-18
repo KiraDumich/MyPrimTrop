@@ -1,17 +1,23 @@
+import { useState } from 'react';
 import {
   AlertTriangle,
-  Bookmark,
   Car,
+  Check,
   CheckCircle2,
   Clock,
   HelpCircle,
-  MessageSquarePlus,
   ShieldAlert,
   ThumbsUp,
   X,
   XCircle,
 } from 'lucide-react';
 import { CATEGORY_LABELS, ROAD_STATUS_LABELS } from '../data/mockPlaces';
+import {
+  BellAlertIcon,
+  BookmarkRibbonIcon,
+  CameraPlusIcon,
+  ShareNodesIcon,
+} from './PrimTropIcons';
 import type {
   CarTypeEnum,
   PlaceWithReports,
@@ -76,139 +82,186 @@ export function PlaceBottomSheet({
   onUpvoteReport,
   onToggleSave,
 }: PlaceBottomSheetProps) {
+  const [shared, setShared] = useState(false);
+
   if (!place) return null;
 
   const latestReport = place.road_reports[0] ?? null;
   const isUpvoted = latestReport ? Boolean(upvotedIds[latestReport.id]) : false;
 
+  const handleSharePlace = async () => {
+    const shareText = `${place.title} (${place.district}) — ${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `ПримТроп: ${place.title}`,
+          text: shareText,
+          url: window.location.href,
+        });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareText);
+      }
+      setShared(true);
+      window.setTimeout(() => setShared(false), 1800);
+    } catch {
+      // Пользователь отменил диалог
+    }
+  };
+
   return (
-    <div className="absolute inset-x-0 bottom-0 z-20 p-3 sm:p-5 pointer-events-none flex justify-center">
-      <section
-        aria-label={`Карточка места: ${place.title}`}
-        className="w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl pointer-events-auto overflow-hidden"
-      >
-        <div className="p-4 sm:p-5 space-y-4">
-          {/* Header Row */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-xs text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span>{CATEGORY_LABELS[place.category]}</span>
-                <span aria-hidden="true">·</span>
-                <span>{place.district}</span>
-                <span aria-hidden="true">·</span>
-                <span className="inline-flex items-center gap-1 font-semibold text-[#0D5C63]">
-                  <Car className="w-3.5 h-3.5" />
-                  <span>{MIN_CAR_BADGE_TEXT[place.min_car_type]}</span>
-                </span>
-              </div>
+    <>
+      {/* Mobile subtle backdrop to dismiss sheet */}
+      <div
+        onClick={onClose}
+        aria-hidden="true"
+        className="md:hidden fixed inset-0 z-30 bg-slate-950/30 backdrop-blur-[1px]"
+      />
 
-              <h3 className="font-[var(--font-display)] text-2xl sm:text-3xl font-semibold text-[#11161A] leading-tight mt-1">
-                {place.title}
-              </h3>
-
-              {place.is_border_zone && (
-                <div className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1">
-                  <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                  <span>Погранзона (нужен пропуск)</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => onToggleSave(place.id)}
-                aria-label={isSaved ? 'Убрать из маршрута' : 'Сохранить в маршрут'}
-                className={`w-9 h-9 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
-                  isSaved
-                    ? 'bg-[#0D5C63] border-[#0D5C63] text-white'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                }`}
-              >
-                <Bookmark className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Закрыть карточку места"
-                className="w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-[#11161A] hover:border-slate-300 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      <div className="fixed inset-x-0 bottom-0 z-40 p-0 md:absolute md:inset-x-0 md:bottom-0 md:z-20 md:p-5 pointer-events-none flex justify-center">
+        <section
+          aria-label={`Карточка места: ${place.title}`}
+          className="w-full max-w-2xl bg-white border-t md:border border-slate-200 rounded-t-2xl md:rounded-2xl shadow-2xl pointer-events-auto overflow-hidden max-h-[82dvh] flex flex-col"
+        >
+          {/* Mobile sheet indicator */}
+          <div className="md:hidden pt-2.5 pb-1 flex justify-center shrink-0">
+            <span className="w-10 h-1 rounded-full bg-slate-300" aria-hidden="true" />
           </div>
 
-          {/* Road Condition Block */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs font-semibold text-slate-700">
-                Актуальное состояние дороги
-              </div>
-              {latestReport && (
-                <div className="inline-flex items-center gap-1 text-xs text-slate-500 tabular-nums">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>{formatHoursAgo(latestReport.created_at)}</span>
+          <div className="px-4 pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] md:p-5 space-y-3.5 md:space-y-4 overflow-y-auto">
+            {/* Header Row */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-xs text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span>{CATEGORY_LABELS[place.category]}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{place.district}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-[#0D5C63]">
+                    <Car className="w-3.5 h-3.5" />
+                    <span>{MIN_CAR_BADGE_TEXT[place.min_car_type]}</span>
+                  </span>
                 </div>
-              )}
+
+                <h3 className="font-[var(--font-display)] text-2xl sm:text-3xl font-semibold text-[#11161A] leading-tight mt-1">
+                  {place.title}
+                </h3>
+
+                {place.is_border_zone && (
+                  <div className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1">
+                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                    <span>Погранзона (нужен пропуск)</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleSharePlace}
+                  aria-label="Поделиться координатами места"
+                  title={shared ? 'Скопировано' : 'Поделиться'}
+                  className={`w-10 h-10 md:w-9 md:h-9 rounded-xl md:rounded-lg border flex items-center justify-center transition-colors cursor-pointer active:scale-95 ${
+                    shared
+                      ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  {shared ? <Check className="w-4 h-4" /> : <ShareNodesIcon className="w-4 h-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onToggleSave(place.id)}
+                  aria-label={isSaved ? 'Убрать из маршрута' : 'Сохранить в маршрут'}
+                  className={`w-10 h-10 md:w-9 md:h-9 rounded-xl md:rounded-lg border flex items-center justify-center transition-colors cursor-pointer active:scale-95 ${
+                    isSaved
+                      ? 'bg-[#0D5C63] border-[#0D5C63] text-white'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  <BookmarkRibbonIcon filled={isSaved} className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Закрыть карточку места"
+                  className="w-10 h-10 md:w-9 md:h-9 rounded-xl md:rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-[#11161A] hover:border-slate-300 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            {latestReport ? (
-              <>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="inline-flex items-center gap-1.5 text-sm font-semibold">
-                    <StatusIcon status={latestReport.status} />
-                    <span className={statusAccentClass(latestReport.status)}>
-                      {ROAD_STATUS_LABELS[latestReport.status]}
-                    </span>
+            {/* Road Condition Block */}
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                  <BellAlertIcon className="w-3.5 h-3.5 text-[#0D5C63]" />
+                  <span>Актуальное состояние дороги</span>
+                </div>
+                {latestReport && (
+                  <div className="inline-flex items-center gap-1 text-xs text-slate-500 tabular-nums">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{formatHoursAgo(latestReport.created_at)}</span>
+                  </div>
+                )}
+              </div>
+
+              {latestReport ? (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="inline-flex items-center gap-1.5 text-sm font-semibold">
+                      <StatusIcon status={latestReport.status} />
+                      <span className={statusAccentClass(latestReport.status)}>
+                        {ROAD_STATUS_LABELS[latestReport.status]}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isUpvoted}
+                      onClick={() => onUpvoteReport(place.id, latestReport)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium tabular-nums transition-colors ${
+                        isUpvoted
+                          ? 'border-[#0D5C63] bg-[#0D5C63]/10 text-[#0D5C63] cursor-default'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 active:scale-95 cursor-pointer'
+                      }`}
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                      <span>Подтвердить (+1) · {latestReport.upvotes}</span>
+                    </button>
                   </div>
 
-                  <button
-                    type="button"
-                    disabled={isUpvoted}
-                    onClick={() => onUpvoteReport(place.id, latestReport)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium tabular-nums transition-colors ${
-                      isUpvoted
-                        ? 'border-[#0D5C63] bg-[#0D5C63]/10 text-[#0D5C63] cursor-default'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 cursor-pointer'
-                    }`}
-                  >
-                    <ThumbsUp className="w-3.5 h-3.5" />
-                    <span>
-                      Подтвердить (+1) · {latestReport.upvotes}
-                    </span>
-                  </button>
+                  <p className="text-sm text-slate-700 leading-snug">{latestReport.comment}</p>
+                </>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-slate-500 py-0.5">
+                  <HelpCircle className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span>Нет свежих данных за 72 часа — поделитесь обстановкой на подъезде.</span>
                 </div>
+              )}
+            </div>
 
-                <p className="text-sm text-slate-700 leading-snug">{latestReport.comment}</p>
-              </>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-slate-500 py-0.5">
-                <HelpCircle className="w-4 h-4 text-slate-400 shrink-0" />
-                <span>Нет свежих данных за 72 часа — поделитесь обстановкой на подъезде.</span>
-              </div>
-            )}
+            {/* Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
+              <button
+                type="button"
+                onClick={() => onOpenDetails(place)}
+                className="min-h-[44px] px-4 py-2.5 text-sm font-medium text-[#11161A] bg-white border border-slate-300 rounded-xl md:rounded-lg hover:bg-slate-50 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
+              >
+                Открыть подробнее
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenReportModal(place)}
+                className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#D95D39] hover:bg-[#C04B28] active:scale-[0.98] rounded-xl md:rounded-lg transition-all cursor-pointer whitespace-nowrap shadow-sm"
+              >
+                <CameraPlusIcon className="w-4 h-4 shrink-0" />
+                <span>Сообщить о дороге</span>
+              </button>
+            </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-0.5">
-            <button
-              type="button"
-              onClick={() => onOpenDetails(place)}
-              className="sm:flex-1 px-4 py-2.5 text-sm font-medium text-[#11161A] bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer whitespace-nowrap"
-            >
-              Открыть подробнее
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenReportModal(place)}
-              className="sm:flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#D95D39] hover:bg-[#C04B28] rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-sm"
-            >
-              <MessageSquarePlus className="w-4 h-4 shrink-0" />
-              <span>Сообщить о дороге</span>
-            </button>
-          </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </>
   );
 }

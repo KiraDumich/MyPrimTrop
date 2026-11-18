@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { AlertTriangle, Car, CheckCircle2, X, XCircle } from 'lucide-react';
+import { CameraPlusIcon } from './PrimTropIcons';
 import type { CarTypeEnum, PlaceWithReports, RoadStatusEnum } from '../types/database';
 
 interface RoadReportModalProps {
@@ -93,25 +94,30 @@ export function RoadReportModal({ place, onClose, onSubmitReport }: RoadReportMo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/65 p-0 sm:p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="road-report-modal-title"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden my-auto"
+        className="w-full max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden sm:my-auto max-h-[92dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <div className="text-xs text-slate-500">Обновление дорожной обстановки</div>
-            <h2
-              id="road-report-modal-title"
-              className="text-lg font-semibold text-[#11161A] truncate"
-            >
-              {place.title}
-            </h2>
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-9 h-9 rounded-xl bg-[#0D5C63]/10 text-[#0D5C63] flex items-center justify-center shrink-0">
+              <CameraPlusIcon className="w-5 h-5" />
+            </span>
+            <div className="min-w-0">
+              <div className="text-xs text-slate-500">Обновление дорожной обстановки</div>
+              <h2
+                id="road-report-modal-title"
+                className="text-lg font-semibold text-[#11161A] truncate"
+              >
+                {place.title}
+              </h2>
+            </div>
           </div>
           <button
             type="button"
@@ -123,7 +129,7 @@ export function RoadReportModal({ place, onClose, onSubmitReport }: RoadReportMo
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-6 space-y-5 overflow-y-auto">
           {/* 3 Large Status Buttons with Icons */}
           <div>
             <div className="text-xs font-medium text-slate-600 mb-2">
@@ -212,7 +218,7 @@ export function RoadReportModal({ place, onClose, onSubmitReport }: RoadReportMo
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="После дождя глубокая колея перед спуском"
-              className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl text-[#11161A] placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
+              className="w-full px-3.5 py-2.5 text-base sm:text-sm bg-white border border-slate-300 rounded-xl text-[#11161A] placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
             />
           </div>
 

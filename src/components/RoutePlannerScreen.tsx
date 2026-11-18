@@ -6,13 +6,15 @@ import {
   CheckCircle2,
   Clock,
   HelpCircle,
-  Map as MapIcon,
-  MapPin,
   Navigation,
-  Route,
   ShieldCheck,
   Umbrella,
 } from 'lucide-react';
+import {
+  MapNavIcon,
+  PinLocationIcon,
+  RouteTrailIcon,
+} from './PrimTropIcons';
 import { CAR_TYPE_LABELS, CATEGORY_LABELS, ROAD_STATUS_LABELS } from '../data/mockPlaces';
 import {
   START_LOCATIONS,
@@ -32,10 +34,10 @@ interface RoutePlannerScreenProps {
   onOpenPlaceDetails: (place: PlaceWithReports) => void;
 }
 
-const CAR_OPTIONS: { value: CarTypeEnum; label: string }[] = [
-  { value: 'sedan', label: 'Седан' },
-  { value: 'crossover', label: 'Кроссовер' },
-  { value: 'suv_4x4', label: 'Внедорожник 4x4' },
+const CAR_OPTIONS: { value: CarTypeEnum; label: string; shortLabel: string }[] = [
+  { value: 'sedan', label: 'Седан', shortLabel: 'Седан' },
+  { value: 'crossover', label: 'Кроссовер', shortLabel: 'Кроссовер' },
+  { value: 'suv_4x4', label: 'Внедорожник 4x4', shortLabel: '4x4' },
 ];
 
 const DURATION_OPTIONS: (6 | 9 | 12)[] = [6, 9, 12];
@@ -116,9 +118,9 @@ export function RoutePlannerScreen({
   );
 
   return (
-    <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
-      <div className="mb-8">
-        <p className="text-xs font-medium text-slate-500 mb-2">
+    <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))] md:py-10">
+      <div className="mb-6 sm:mb-8">
+        <p className="text-xs font-medium text-slate-500 mb-1.5 sm:mb-2">
           Умный конструктор поездки на 1 день
         </p>
         <h1 className="font-[var(--font-display)] text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#11161A] leading-tight">
@@ -131,11 +133,11 @@ export function RoutePlannerScreen({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
         {/* Left Column: Trip Parameters Form */}
         <section
           aria-label="Параметры поездки"
-          className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 space-y-6"
+          className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-5 sm:space-y-6"
         >
           <div>
             <h2 className="text-base font-semibold text-[#11161A]">Параметры выезда</h2>
@@ -153,12 +155,12 @@ export function RoutePlannerScreen({
               Точка старта
             </label>
             <div className="relative">
-              <MapPin className="w-4 h-4 text-[#0D5C63] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <PinLocationIcon className="w-4 h-4 text-[#0D5C63] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <select
                 id="route-start-select"
                 value={startLocationId}
                 onChange={(e) => setStartLocationId(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 text-sm font-medium bg-white border border-slate-300 rounded-xl text-[#11161A] focus-visible:outline-2 focus-visible:outline-[#0D5C63] cursor-pointer"
+                className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm font-medium bg-white border border-slate-300 rounded-xl text-[#11161A] focus-visible:outline-2 focus-visible:outline-[#0D5C63] cursor-pointer"
               >
                 {START_LOCATIONS.map((loc) => (
                   <option key={loc.id} value={loc.id}>
@@ -172,7 +174,7 @@ export function RoutePlannerScreen({
           {/* Car Type Selection */}
           <div>
             <div className="text-xs font-semibold text-slate-700 mb-2">Тип автомобиля</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {CAR_OPTIONS.map((opt) => {
                 const active = carType === opt.value;
                 return (
@@ -180,14 +182,15 @@ export function RoutePlannerScreen({
                     key={opt.value}
                     type="button"
                     onClick={() => setCarType(opt.value)}
-                    className={`px-3 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
+                    className={`px-2 sm:px-3 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1 sm:gap-1.5 transition-colors cursor-pointer whitespace-nowrap active:scale-[0.98] ${
                       active
                         ? 'border-[#0D5C63] bg-[#0D5C63] text-white'
                         : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                     }`}
                   >
                     <Car className="w-3.5 h-3.5 shrink-0" />
-                    <span>{opt.label}</span>
+                    <span className="sm:hidden">{opt.shortLabel}</span>
+                    <span className="hidden sm:inline">{opt.label}</span>
                   </button>
                 );
               })}
@@ -275,7 +278,7 @@ export function RoutePlannerScreen({
         {/* Right Column: Result Metrics, Timeline & Weather Backup */}
         <section aria-label="Сгенерированный маршрут" className="lg:col-span-7 space-y-6">
           {/* Metrics & CTA Header Card */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
               <div>
                 <div className="text-xs text-slate-500">
@@ -293,9 +296,9 @@ export function RoutePlannerScreen({
                 <button
                   type="button"
                   onClick={() => onShowOnMap(generatedRoute)}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#0D5C63] hover:bg-[#094348] rounded-xl transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#0D5C63] hover:bg-[#094348] active:scale-[0.98] rounded-xl transition-all cursor-pointer whitespace-nowrap shrink-0"
                 >
-                  <MapIcon className="w-4 h-4" />
+                  <MapNavIcon className="w-4 h-4" />
                   <span>Показать маршрут на карте</span>
                 </button>
               )}
@@ -305,7 +308,7 @@ export function RoutePlannerScreen({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div>
                 <div className="text-xs text-slate-500 flex items-center gap-1.5">
-                  <Route className="w-3.5 h-3.5 text-[#0D5C63]" />
+                  <RouteTrailIcon className="w-3.5 h-3.5 text-[#0D5C63]" />
                   <span>Общий километраж</span>
                 </div>
                 <div className="text-2xl font-semibold text-[#11161A] tabular-nums mt-1">

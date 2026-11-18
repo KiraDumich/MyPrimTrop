@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Car, Compass, Mountain, ShieldAlert, Trees, Waves, X } from 'lucide-react';
+import { Car, Mountain, ShieldAlert, Trees, Waves, X } from 'lucide-react';
 import type { GeneratedRoute } from '../lib/routeGenerator';
 import type {
   CarTypeEnum,
@@ -12,6 +12,7 @@ import type {
   RoadStatusEnum,
 } from '../types/database';
 import { PlaceBottomSheet } from './PlaceBottomSheet';
+import { FilterFunnelIcon, MapNavIcon, RouteTrailIcon } from './PrimTropIcons';
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
@@ -29,11 +30,11 @@ interface MapScreenProps {
   onToggleSave: (placeId: string) => void;
 }
 
-const CAR_CHIPS: { value: MapCarFilter; label: string }[] = [
-  { value: 'all', label: 'Все авто' },
-  { value: 'sedan', label: 'На седане' },
-  { value: 'crossover', label: 'Кроссовер' },
-  { value: 'suv_4x4', label: 'Только 4x4' },
+const CAR_CHIPS: { value: MapCarFilter; label: string; mobileLabel: string }[] = [
+  { value: 'all', label: 'Все авто', mobileLabel: 'Все авто' },
+  { value: 'sedan', label: 'На седане', mobileLabel: 'Седан' },
+  { value: 'crossover', label: 'Кроссовер', mobileLabel: 'Кроссовер' },
+  { value: 'suv_4x4', label: 'Только 4x4', mobileLabel: '4x4' },
 ];
 
 const CATEGORY_CHIPS: { value: PlaceCategoryEnum; label: string }[] = [
@@ -132,8 +133,8 @@ export function MapScreen({
   }, [activeRoute]);
 
   const selectedPlace = useMemo(
-    () => places.find((p) => p.id === selectedPlaceId) ?? null,
-    [places, selectedPlaceId]
+    () => filteredPlaces.find((p) => p.id === selectedPlaceId) ?? null,
+    [filteredPlaces, selectedPlaceId]
   );
 
   // Initialize MapLibre GL map once
@@ -366,14 +367,18 @@ export function MapScreen({
   }, [filteredPlaces, selectedPlaceId, routeOrderByPlaceId]);
 
   return (
-    <div className="relative w-full h-[calc(100vh-4rem)] min-h-[580px] bg-[#E5EAEE] overflow-hidden">
-      {/* Top Horizontal Scrollable Quick Filters Bar */}
-      <div className="absolute top-3 left-0 right-0 z-10 px-3 sm:px-5 pointer-events-none">
-        <div className="max-w-7xl mx-auto flex flex-col gap-2">
-          <div className="pointer-events-auto flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+    <div className="relative w-full h-full min-h-[420px] flex-1 bg-[#E5EAEE] overflow-hidden isolate">
+      {/* Top Quick Filters Bar (z-20 above MapLibre canvas & markers) */}
+      <div
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        className="absolute top-2.5 sm:top-3 left-0 right-0 z-20 px-2.5 sm:px-5 pointer-events-none"
+      >
+        <div className="max-w-7xl mx-auto flex flex-col gap-1.5 sm:gap-2">
+          <div className="pointer-events-auto flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
             {/* Car Filter Chips */}
-            <div className="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-sm border border-slate-200/90 rounded-xl p-1 shadow-sm shrink-0">
-              <span className="pl-2 pr-1 text-slate-400" aria-hidden="true">
+            <div className="inline-flex items-center gap-1 bg-white/95 backdrop-blur-sm border border-slate-200/90 rounded-xl p-1 shadow-sm w-full sm:w-auto overflow-x-auto no-scrollbar">
+              <span className="pl-1.5 pr-0.5 text-slate-400 shrink-0" aria-hidden="true">
                 <Car className="w-4 h-4" />
               </span>
               {CAR_CHIPS.map((chip) => {
@@ -383,20 +388,35 @@ export function MapScreen({
                     key={chip.value}
                     type="button"
                     onClick={() => setCarFilter(chip.value)}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 active:scale-[0.97] ${
                       active
                         ? 'bg-[#0D5C63] text-white'
                         : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    {chip.label}
+                    <span className="sm:hidden">{chip.mobileLabel}</span>
+                    <span className="hidden sm:inline">{chip.label}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Category Filter Chips */}
-            <div className="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-sm border border-slate-200/90 rounded-xl p-1 shadow-sm shrink-0">
+            {/* Category Filter Chips — always visible on mobile without hiding off-screen */}
+            <div className="inline-flex items-center gap-1 bg-white/95 backdrop-blur-sm border border-slate-200/90 rounded-xl p-1 shadow-sm w-full sm:w-auto overflow-x-auto no-scrollbar">
+              <span className="pl-1.5 pr-0.5 text-slate-400 shrink-0 hidden sm:inline-flex" aria-hidden="true">
+                <FilterFunnelIcon className="w-3.5 h-3.5" />
+              </span>
+              <button
+                type="button"
+                onClick={() => setCategoryFilter(null)}
+                className={`px-2 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 active:scale-[0.97] ${
+                  categoryFilter === null
+                    ? 'bg-[#11161A] text-white'
+                    : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Все
+              </button>
               {CATEGORY_CHIPS.map((chip) => {
                 const active = categoryFilter === chip.value;
                 return (
@@ -406,13 +426,15 @@ export function MapScreen({
                     onClick={() =>
                       setCategoryFilter((prev) => (prev === chip.value ? null : chip.value))
                     }
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 active:scale-[0.97] ${
                       active
                         ? 'bg-[#11161A] text-white'
                         : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    <CategoryGlyph category={chip.value} />
+                    <span className="hidden sm:inline-flex">
+                      <CategoryGlyph category={chip.value} />
+                    </span>
                     <span>{chip.label}</span>
                   </button>
                 );
@@ -422,34 +444,35 @@ export function MapScreen({
 
           {/* Compact Status Legend + Active Route Banner */}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="pointer-events-auto inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 px-3 py-1.5 bg-white/92 backdrop-blur-sm border border-slate-200/90 rounded-lg text-[11px] font-medium text-slate-700 shadow-sm">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+            <div className="pointer-events-auto inline-flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-1.5 bg-white/92 backdrop-blur-sm border border-slate-200/90 rounded-lg text-[11px] font-medium text-slate-700 shadow-sm max-w-full overflow-x-auto no-scrollbar whitespace-nowrap">
+              <span className="inline-flex items-center gap-1.5 shrink-0">
+                <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500" />
                 Проезжаемо
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <span className="inline-flex items-center gap-1.5 shrink-0">
+                <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-500" />
                 Сложно
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+              <span className="inline-flex items-center gap-1.5 shrink-0">
+                <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-rose-500" />
                 Размыто
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
+              <span className="inline-flex items-center gap-1.5 shrink-0">
+                <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-slate-500" />
                 Нет данных
               </span>
-              <span className="text-slate-400" aria-hidden="true">
+              <span className="text-slate-400 shrink-0" aria-hidden="true">
                 |
               </span>
-              <span className="tabular-nums text-slate-600">
-                Показано: {filteredPlaces.length} из {places.length}
+              <span className="tabular-nums text-slate-600 shrink-0">
+                {filteredPlaces.length}/{places.length}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               {activeRoute && (
                 <div className="pointer-events-auto inline-flex items-center gap-2 px-3 py-1.5 bg-[#0D5C63] text-white rounded-lg text-[11px] font-semibold shadow-sm">
+                  <RouteTrailIcon className="w-3.5 h-3.5 shrink-0" />
                   <span className="tabular-nums">
                     Маршрут: {activeRoute.stops.length} точек ·{' '}
                     {activeRoute.totalDistanceKm.toFixed(1)} км
@@ -473,13 +496,27 @@ export function MapScreen({
                 }}
                 className="pointer-events-auto hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/92 backdrop-blur-sm border border-slate-200/90 rounded-lg text-[11px] font-medium text-slate-700 hover:text-[#0D5C63] shadow-sm transition-colors cursor-pointer"
               >
-                <Compass className="w-3.5 h-3.5 text-[#0D5C63]" />
+                <MapNavIcon className="w-3.5 h-3.5 text-[#0D5C63]" />
                 <span>Приморье целиком</span>
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Floating Recenter Button */}
+      <button
+        type="button"
+        onClick={() => {
+          setSelectedPlaceId(null);
+          mapRef.current?.flyTo({ center: [132.1, 43.2], zoom: 8.5, duration: 500 });
+        }}
+        aria-label="Показать всё Приморье на карте"
+        title="Приморье целиком"
+        className="sm:hidden absolute right-2.5 bottom-[8.5rem] z-20 w-10 h-10 rounded-xl bg-white/95 backdrop-blur-sm border border-slate-200 shadow-md flex items-center justify-center text-[#0D5C63] active:scale-95 transition-transform cursor-pointer"
+      >
+        <MapNavIcon className="w-5 h-5" />
+      </button>
 
       {/* MapLibre GL Canvas Container */}
       {mapError ? (
@@ -493,7 +530,7 @@ export function MapScreen({
           </p>
         </div>
       ) : (
-        <div ref={mapContainerRef} className="w-full h-full" />
+        <div ref={mapContainerRef} className="relative z-0 w-full h-full" />
       )}
 
       {/* Selected Place Bottom Sheet / Drawer */}

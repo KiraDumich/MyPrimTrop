@@ -1,5 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Bookmark, Car, Clock, MapPin, ShieldAlert, ThumbsUp, X } from 'lucide-react';
+import { Car, Check, Clock, ShieldAlert, ThumbsUp, X } from 'lucide-react';
+import {
+  BellAlertIcon,
+  BookmarkRibbonIcon,
+  CameraPlusIcon,
+  PinLocationIcon,
+  ShareNodesIcon,
+  TravelerIcon,
+} from './PrimTropIcons';
 import {
   CAR_TYPE_LABELS,
   CATEGORY_LABELS,
@@ -64,6 +72,7 @@ export function TrailDetailModal({
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [shared, setShared] = useState(false);
 
   useEffect(() => {
     setFormError(null);
@@ -109,19 +118,38 @@ export function TrailDetailModal({
     await onUpvoteReport(place.id, report);
   };
 
+  const handleSharePlace = async () => {
+    const shareText = `${place.title} (${place.district}) — ${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `ПримТроп: ${place.title}`,
+          text: shareText,
+          url: window.location.href,
+        });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareText);
+      }
+      setShared(true);
+      window.setTimeout(() => setShared(false), 1800);
+    } catch {
+      // Отменено пользователем
+    }
+  };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/65 p-0 sm:p-6 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="place-modal-title"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
+        className="relative w-full max-w-3xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden sm:my-auto max-h-[92dvh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative h-64 sm:h-76 shrink-0 bg-slate-900">
+        <div className="relative h-52 sm:h-76 shrink-0 bg-slate-900">
           <TrailImage
             src={resolvePlaceImage(place)}
             alt={place.title}
@@ -154,7 +182,7 @@ export function TrailDetailModal({
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 overflow-y-auto space-y-8">
+        <div className="p-4 sm:p-8 overflow-y-auto space-y-6 sm:space-y-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-6 border-b border-slate-200">
             <div>
               <div className="text-xs text-slate-500">Мин. транспорт</div>
@@ -188,7 +216,7 @@ export function TrailDetailModal({
             <p className="text-[15px] leading-relaxed text-slate-700">{place.description}</p>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-600 pt-1">
               <span className="inline-flex items-center gap-1.5 font-[var(--font-mono)] tabular-nums">
-                <MapPin className="w-3.5 h-3.5 text-[#0D5C63]" />
+                <PinLocationIcon className="w-3.5 h-3.5 text-[#0D5C63]" />
                 {place.lat.toFixed(4)}° N, {place.lng.toFixed(4)}° E
               </span>
               {place.is_border_zone && (
@@ -203,8 +231,9 @@ export function TrailDetailModal({
           {/* Road Reports Section */}
           <div className="space-y-4">
             <div className="flex items-baseline justify-between gap-4">
-              <h3 className="text-base font-semibold text-[#11161A]">
-                Оперативные сводки по дороге ({place.road_reports.length})
+              <h3 className="inline-flex items-center gap-2 text-base font-semibold text-[#11161A]">
+                <BellAlertIcon className="w-4 h-4 text-[#0D5C63]" />
+                <span>Оперативные сводки по дороге ({place.road_reports.length})</span>
               </h3>
               <span className="text-xs text-slate-500">Отчёты активны 72 часа</span>
             </div>
@@ -231,7 +260,8 @@ export function TrailDetailModal({
                           <span className="text-slate-400" aria-hidden="true">
                             ·
                           </span>
-                          <span className="text-slate-600">
+                          <span className="inline-flex items-center gap-1 text-slate-600">
+                            <TravelerIcon className="w-3.5 h-3.5 text-slate-400" />
                             Авто: {CAR_TYPE_LABELS[report.car_used]}
                           </span>
                           <span className="text-slate-400" aria-hidden="true">
@@ -269,8 +299,9 @@ export function TrailDetailModal({
               onSubmit={handleSubmit}
               className="p-4 sm:p-5 rounded-xl border border-slate-200 bg-white space-y-3"
             >
-              <div className="text-sm font-semibold text-[#11161A]">
-                Добавить отметку о состоянии подъезда
+              <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#11161A]">
+                <CameraPlusIcon className="w-4 h-4 text-[#0D5C63]" />
+                <span>Добавить отметку о состоянии подъезда</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -279,7 +310,7 @@ export function TrailDetailModal({
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as RoadStatusEnum)}
-                    className="w-full px-3 py-2 text-xs font-medium bg-white border border-slate-200 rounded-lg text-[#11161A] focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
+                    className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-xs font-medium bg-white border border-slate-200 rounded-lg text-[#11161A] focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
                   >
                     <option value="passable">Проезжаемо</option>
                     <option value="hard">Сложно / ямы / лужи</option>
@@ -292,7 +323,7 @@ export function TrailDetailModal({
                   <select
                     value={carUsed}
                     onChange={(e) => setCarUsed(e.target.value as CarTypeEnum)}
-                    className="w-full px-3 py-2 text-xs font-medium bg-white border border-slate-200 rounded-lg text-[#11161A] focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
+                    className="w-full px-3 py-2.5 sm:py-2 text-base sm:text-xs font-medium bg-white border border-slate-200 rounded-lg text-[#11161A] focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
                   >
                     <option value="sedan">Седан</option>
                     <option value="crossover">Кроссовер</option>
@@ -308,7 +339,7 @@ export function TrailDetailModal({
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="Например: после дождя глубокая колея перед перевалом, клиренс обязателен..."
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg text-[#11161A] placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
+                  className="w-full px-3 py-2 text-base sm:text-sm bg-white border border-slate-200 rounded-lg text-[#11161A] placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
                 />
               </label>
 
@@ -327,15 +358,27 @@ export function TrailDetailModal({
           </div>
         </div>
 
-        <div className="px-6 sm:px-8 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-4 shrink-0">
+        <div className="px-4 sm:px-8 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
           <div className="text-xs text-slate-500 tabular-nums">
             Координаты: {place.lat.toFixed(4)}, {place.lng.toFixed(4)}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleSharePlace}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+            >
+              {shared ? (
+                <Check className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <ShareNodesIcon className="w-4 h-4 text-[#0D5C63]" />
+              )}
+              <span>{shared ? 'Скопировано' : 'Поделиться'}</span>
+            </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-[#11161A] transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              className="px-3 sm:px-4 py-2 text-sm font-medium text-slate-700 hover:text-[#11161A] transition-colors cursor-pointer whitespace-nowrap shrink-0"
             >
               Закрыть
             </button>
@@ -348,7 +391,7 @@ export function TrailDetailModal({
                   : 'bg-[#0D5C63] text-white hover:bg-[#094348]'
               }`}
             >
-              <Bookmark className="w-4 h-4" />
+              <BookmarkRibbonIcon filled={isSaved} className="w-4 h-4" />
               <span>{isSaved ? 'В маршруте' : 'Добавить в маршрут'}</span>
             </button>
           </div>

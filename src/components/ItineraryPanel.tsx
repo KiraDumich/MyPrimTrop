@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Check, Copy, Trash2, X } from 'lucide-react';
+import { Check, Trash2, X } from 'lucide-react';
+import { ShareNodesIcon } from './PrimTropIcons';
 import { CAR_TYPE_LABELS, CATEGORY_LABELS } from '../data/mockPlaces';
 import type { CarTypeEnum, PlaceWithReports } from '../types/database';
 
@@ -169,7 +170,7 @@ export function ItineraryPanel({
           )}
         </div>
 
-        <div className="p-6 border-t border-slate-200 bg-white flex items-center justify-between gap-3">
+        <div className="px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:py-6 border-t border-slate-200 bg-white flex items-center justify-between gap-3">
           {savedPlaces.length > 0 ? (
             <>
               <button
@@ -184,8 +185,8 @@ export function ItineraryPanel({
                 onClick={handleCopySummary}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#0D5C63] rounded-lg hover:bg-[#094348] transition-colors cursor-pointer whitespace-nowrap shrink-0"
               >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                <span>{copied ? 'Скопировано' : 'Скопировать план'}</span>
+                {copied ? <Check className="w-4 h-4" /> : <ShareNodesIcon className="w-4 h-4" />}
+                <span>{copied ? 'Скопировано' : 'Поделиться планом'}</span>
               </button>
             </>
           ) : (

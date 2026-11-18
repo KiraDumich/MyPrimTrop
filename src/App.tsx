@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowUpRight,
-  Bookmark,
   CheckCircle2,
-  Compass,
-  Search,
   WifiOff,
   X,
 } from 'lucide-react';
 import { Header, type AppTab } from './components/Header';
+import {
+  BookmarkRibbonIcon,
+  FilterSlidersIcon,
+  MapNavIcon,
+  PrimTropLogo,
+  RouteTrailIcon,
+  SearchLoupeIcon,
+} from './components/PrimTropIcons';
 import { MapScreen } from './components/MapScreen';
 import { RoutePlannerScreen } from './components/RoutePlannerScreen';
 import { OfflineScreen } from './components/OfflineScreen';
@@ -174,6 +179,8 @@ export function App() {
         const el = document.querySelector(anchor);
         el?.scrollIntoView({ behavior: 'smooth' });
       });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -230,11 +237,16 @@ export function App() {
   );
 
   return (
-    <div id="top" className="min-h-screen flex flex-col bg-[#F8F9FA] text-[#11161A] overflow-x-hidden">
+    <div
+      id="top"
+      className={`flex flex-col bg-[#F8F9FA] text-[#11161A] overflow-x-hidden ${
+        activeTab === 'map' ? 'h-dvh overflow-hidden' : 'min-h-dvh'
+      }`}
+    >
       {!isOnline && (
         <div
           role="status"
-          className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs font-medium text-amber-900 flex items-center justify-center gap-2 text-center"
+          className="bg-amber-50 border-b border-amber-200 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-medium text-amber-900 flex items-center justify-center gap-2 text-center shrink-0"
         >
           <WifiOff className="w-3.5 h-3.5 text-amber-700 shrink-0" />
           <span>Офлайн-режим: показаны сохранённые данные</span>
@@ -249,7 +261,7 @@ export function App() {
       />
 
       {activeTab === 'map' && (
-        <main className="flex-1">
+        <main className="flex-1 min-h-0 flex flex-col">
           <MapScreen
             places={places}
             savedIds={savedIds}
@@ -303,6 +315,7 @@ export function App() {
                       onClick={() => setActiveTab('map')}
                       className="inline-flex items-center gap-2 px-5 sm:px-6 py-3 text-sm font-medium text-white bg-[#0D5C63] rounded-lg hover:bg-[#094348] active:scale-[0.98] transition-all whitespace-nowrap shrink-0 cursor-pointer"
                     >
+                      <MapNavIcon className="w-4 h-4" />
                       <span>Открыть карту дорог</span>
                       <ArrowUpRight className="w-4 h-4" />
                     </button>
@@ -311,7 +324,7 @@ export function App() {
                       onClick={() => setActiveTab('route')}
                       className="inline-flex items-center gap-2 px-4 sm:px-5 py-3 text-sm font-medium text-[#11161A] bg-white border border-slate-200 rounded-lg hover:border-slate-300 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap shrink-0"
                     >
-                      <Compass className="w-4 h-4 text-[#0D5C63]" />
+                      <RouteTrailIcon className="w-4 h-4 text-[#0D5C63]" />
                       <span>Собрать маршрут на день</span>
                     </button>
                   </div>
@@ -400,14 +413,14 @@ export function App() {
 
                   {/* Search Input */}
                   <div className="relative w-full lg:w-72">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <SearchLoupeIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Поиск по названию места..."
                       aria-label="Поиск по названию места"
-                      className="w-full pl-10 pr-9 py-2.5 text-sm bg-white border border-slate-300 rounded-xl text-[#11161A] placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
+                      className="w-full pl-10 pr-9 py-2.5 text-base sm:text-sm bg-white border border-slate-300 rounded-xl text-[#11161A] placeholder:text-slate-400 focus-visible:outline-2 focus-visible:outline-[#0D5C63]"
                     />
                     {searchQuery && (
                       <button
@@ -424,37 +437,35 @@ export function App() {
 
                 {/* Filters Row */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-                    <div
-                      className="inline-flex items-center gap-1 p-1 bg-slate-200/70 rounded-xl shrink-0"
-                      role="tablist"
-                      aria-label="Категории локаций"
-                    >
-                      {(
-                        [
-                          { id: 'all', label: 'Все' },
-                          { id: 'beach', label: 'Бухты' },
-                          { id: 'viewpoint', label: 'Видовые' },
-                          { id: 'waterfall', label: 'Водопады' },
-                          { id: 'history', label: 'История' },
-                        ] as { id: CategoryFilter; label: string }[]
-                      ).map((cat) => (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          role="tab"
-                          aria-selected={categoryFilter === cat.id}
-                          onClick={() => setCategoryFilter(cat.id)}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 active:scale-[0.98] ${
-                            categoryFilter === cat.id
-                              ? 'bg-white text-[#11161A] shadow-sm'
-                              : 'text-slate-600 hover:text-[#11161A]'
-                          }`}
-                        >
-                          {cat.label}
-                        </button>
-                      ))}
-                    </div>
+                  <div
+                    className="flex flex-wrap sm:inline-flex items-center gap-1 p-1 bg-slate-200/70 rounded-xl w-full sm:w-auto"
+                    role="tablist"
+                    aria-label="Категории локаций"
+                  >
+                    {(
+                      [
+                        { id: 'all', label: 'Все' },
+                        { id: 'beach', label: 'Бухты' },
+                        { id: 'viewpoint', label: 'Видовые' },
+                        { id: 'waterfall', label: 'Водопады' },
+                        { id: 'history', label: 'История' },
+                      ] as { id: CategoryFilter; label: string }[]
+                    ).map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={categoryFilter === cat.id}
+                        onClick={() => setCategoryFilter(cat.id)}
+                        className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer whitespace-nowrap text-center active:scale-[0.98] ${
+                          categoryFilter === cat.id
+                            ? 'bg-white text-[#11161A] shadow-sm'
+                            : 'text-slate-600 hover:text-[#11161A]'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2.5">
@@ -462,13 +473,17 @@ export function App() {
                       type="button"
                       aria-pressed={verifiedRoadsOnly}
                       onClick={() => setVerifiedRoadsOnly((prev) => !prev)}
-                      className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer whitespace-nowrap active:scale-[0.98] ${
+                      className={`inline-flex items-center justify-center gap-2 px-3.5 py-2.5 sm:py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer whitespace-nowrap active:scale-[0.98] flex-1 sm:flex-initial ${
                         verifiedRoadsOnly
                           ? 'bg-[#0D5C63] border-[#0D5C63] text-white'
                           : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                       }`}
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      {verifiedRoadsOnly ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      ) : (
+                        <FilterSlidersIcon className="w-3.5 h-3.5 shrink-0" />
+                      )}
                       <span>Только проверенные дороги</span>
                     </button>
 
@@ -476,7 +491,7 @@ export function App() {
                       aria-label="Фильтр по проходимости автомобиля"
                       value={carFilter}
                       onChange={(e) => setCarFilter(e.target.value as CarFilter)}
-                      className="px-3 py-2 text-xs font-medium bg-white border border-slate-200 rounded-xl text-slate-700 hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-[#0D5C63] cursor-pointer"
+                      className="px-3 py-2.5 sm:py-2 text-base sm:text-xs font-medium bg-white border border-slate-200 rounded-xl text-slate-700 hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-[#0D5C63] cursor-pointer flex-1 sm:flex-initial"
                     >
                       <option value="all">Любой автомобиль</option>
                       <option value="sedan">Доступно для седана</option>
@@ -612,7 +627,7 @@ export function App() {
                                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                               }`}
                             >
-                              <Bookmark className="w-3.5 h-3.5" />
+                              <BookmarkRibbonIcon filled={isSaved} className="w-3.5 h-3.5" />
                               <span>{isSaved ? 'Сохранено' : 'В маршрут'}</span>
                             </button>
                           </div>
@@ -702,18 +717,22 @@ export function App() {
             </section>
           </main>
 
-          <footer className="border-t border-slate-200 bg-white">
+          <footer className="border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-              <div className="text-center sm:text-left">
-                ПримТроп <span aria-hidden="true">·</span> Вся дикая красота Приморья в одном
-                приложении: от сопок до маяков
+              <div className="inline-flex items-center gap-2.5 text-center sm:text-left">
+                <PrimTropLogo size="sm" />
+                <span>
+                  ПримТроп <span aria-hidden="true">·</span> Вся дикая красота Приморья в одном
+                  приложении: от сопок до маяков
+                </span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsItineraryOpen(true)}
-                className="text-slate-700 hover:text-[#0D5C63] font-medium transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-slate-700 hover:text-[#0D5C63] font-medium transition-colors cursor-pointer"
               >
-                Открыть мой маршрут ({savedIds.length})
+                <RouteTrailIcon className="w-4 h-4 text-[#0D5C63]" />
+                <span>Открыть мой маршрут ({savedIds.length})</span>
               </button>
             </div>
           </footer>
